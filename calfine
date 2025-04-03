@@ -1,0 +1,35 @@
+DECLARE
+    no_of_days INTEGER := 0;
+    fine_amount INTEGER := 0;
+    date1 DATE;
+    rolln NUMBER := 106;  -- Sample roll number, replace with input variable
+    bookn VARCHAR2(255); -- Sample book name, replace as needed
+BEGIN 
+    -- Retrieve issue date
+    SELECT dateofissue INTO date1 
+    FROM borrower 
+    WHERE roll_no = rolln;
+
+    -- Calculate overdue days
+    no_of_days := TRUNC(SYSDATE) - TRUNC(date1);
+
+    -- Calculate fine amount
+    IF no_of_days > 15 AND no_of_days < 30 THEN
+        fine_amount := (no_of_days - 15) * 5;
+    ELSIF no_of_days > 30 THEN
+        fine_amount := (15 * 5) + ((no_of_days - 30) * 50);
+    END IF;
+
+    -- Display fine amount
+    DBMS_OUTPUT.PUT_LINE('Fine is: ' || fine_amount);
+
+    -- Insert fine details and update status if fine exists
+    IF fine_amount > 0 THEN
+        INSERT INTO fine (roll_no, f_date, amount) 
+        VALUES (rolln, SYSDATE, fine_amount);
+
+        UPDATE borrower 
+        SET status = 'R' 
+        WHERE roll_no = rolln;
+    END IF;
+END
